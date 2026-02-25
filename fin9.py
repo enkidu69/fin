@@ -240,12 +240,12 @@ def check_patterns_full(ticker, df):
     
 # 1. HAMMER
     if (c0['LowerShadow'] > 2 * body0) and (c0['UpperShadow'] < 0.2 * body0):
-        if c1['Close'] < df.iloc[-7]['Close']:
+        if c0['Close'] < df.iloc[-3]['Close']:
             patterns.append("Hammer Low shadow "+c0['LowerShadow'])
            
     # 2. INVERTED HAMMER
     if (c1['UpperShadow'] > 2 * body1) and (c1['LowerShadow'] < 0.2 * body1):
-        if c0['Close'] < df.iloc[-7]['Close'] and c0['Close']>c1['Close']:
+        if c0['Close'] < df.iloc[-3]['Close'] and c0['Close']>c1['Close']:
             patterns.append("Confirmed Inverted Hammer")
 
     # 3. DRAGONFLY DOJI
