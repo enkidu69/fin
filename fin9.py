@@ -230,7 +230,6 @@ def check_patterns_full(ticker, df):
     body0 = c0['Body']
     body1 = c1['Body']
 
-
     is_white = c0['Close'] > c0['Open']
     is_black = c0['Close'] < c0['Open']
     prev_white = c1['Close'] > c1['Open']
@@ -240,9 +239,17 @@ def check_patterns_full(ticker, df):
     
 # 1. HAMMER
     if (c0['LowerShadow'] > 2 * body0) and (c0['UpperShadow'] < 0.2 * body0):
+        if c1['Close'] < df.iloc[-10]['Close']:
+            patterns.append("Hammer 10")
+
+    if (c0['LowerShadow'] > 2 * body0) and (c0['UpperShadow'] < 0.2 * body0):
         if c0['Close'] < df.iloc[-3]['Close']:
-            patterns.append("Hammer Low shadow "+c0['LowerShadow'])
-           
+            patterns.append("Hammer 3 remember low shadow")
+
+    if (c0['UpperShadow'] > 2 * body0) and (c0['LowerShadow'] < 0.2 * body0):
+        if c1['Close'] < df.iloc[-10]['Close']:
+            patterns.append("Inverted Hammer not confirmed")
+       
     # 2. INVERTED HAMMER
     if (c1['UpperShadow'] > 2 * body1) and (c1['LowerShadow'] < 0.2 * body1):
         if c0['Close'] < df.iloc[-3]['Close'] and c0['Close']>c1['Close']:
@@ -359,13 +366,26 @@ def main():
         return
     
     results = []
-    avail = data.columns.levels[0] if isinstance(data.columns, pd.MultiIndex) else [tickers[0]]
-    if len(tickers) == 1: avail = [tickers[0]]
+# NEW: Robust way to handle the yfinance column structure
+    if isinstance(data.columns, pd.MultiIndex):
+        # Find which level contains the tickers. Usually, it's the one that matches our input list.
+        if tickers[0] in data.columns.get_level_values(0):
+            avail = data.columns.levels[0]
+            ticker_level = 0
+        else:
+            avail = data.columns.levels[1]
+            ticker_level = 1
+    else:
+        avail = tickers if len(tickers) == 1 else []
 
     for ticker in avail:
         try:
             if isinstance(data.columns, pd.MultiIndex):
-                df_t = data[ticker].copy().dropna()
+                # Extract data based on which level the ticker is on
+                if ticker_level == 0:
+                    df_t = data[ticker].copy().dropna()
+                else:
+                    df_t = data.xs(ticker, axis=1, level=1).copy().dropna()
             else:
                 df_t = data.copy().dropna()
 
@@ -409,14 +429,16 @@ def main():
             if buy_signal != "NO" or patterns != "None":
                 print(f"[{signal_date}] Alert: {ticker} -> Buy Signal: {buy_signal} | Pattern: {patterns}")
             
-        except Exception as e: continue
+        except Exception as e:
+            print(f"Error on {ticker}: {e}")
+            continue
 
     if results:
         df_res = pd.DataFrame(results)
         # Reorder columns to put the most important stuff first
         cols = ['Date', 'Ticker', 'Price', 'Buy Signal', 'Patterns', 'ROC(5)', 'RSI', 'Z-Score', 'Rel Vol', 'Daily Trend', 'Bullish Divergence', 'Volatility Squeeze', 'PTJ Status', 'Golden Cross']
         df_res = df_res[[c for c in cols if c in df_res.columns]]
-        
+        print(df_res)
         df_res.to_csv(OUTPUT_FILE, index=False)
         print(f"\nCompleted. Saved all {len(results)} rows to {OUTPUT_FILE}")
         print(df_res.head(10).to_string(index=False))
