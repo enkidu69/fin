@@ -10,7 +10,7 @@ INPUT_FILE = "market_tickers.csv"
 OUTPUT_FILE = "nison_expert_signals_dated.csv"
 
 # --- 1. ROBUST DOWNLOADER ---
-def safe_download(ticker, period, interval="1d"):
+def safe_download(ticker, period="5y", interval="1w"):
     """
     Downloads data with retry logic to handle Rate Limits.
     """
@@ -217,6 +217,36 @@ def check_ptj_rules(df):
             break
     return ptj_status, gc_date
 
+
+def calculate_risk_parameters(df):
+    """
+    Calculates rigid stop-loss and take-profit targets using an ATR buffer.
+    """
+    if len(df) < 14:
+        return 0.0, 0.0
+        
+    current_price = df['Close'].iloc[-1]
+    
+    # Identify the recent structural floor (Lowest low of the last 5 periods)
+    structural_floor = df['Low'].rolling(window=5).min().iloc[-1]
+    
+    # Apply the Volatility Buffer (1.5x ATR)
+    current_atr = df['ATR_14'].iloc[-1]
+    stop_loss = structural_floor - (current_atr * 1.5)
+    
+    # Cap the stop loss so it cannot exceed the current price
+    if stop_loss >= current_price:
+        stop_loss = current_price * 0.95 
+        
+    # Calculate Target Selling Price (1:2 Risk/Reward)
+    capital_at_risk = current_price - stop_loss
+    target_price = current_price + (capital_at_risk * 2.0)
+    
+    return round(stop_loss, 2), round(target_price, 2)
+
+
+
+
 def check_patterns_full(ticker, df):
     if len(df) < 30: return "None", 0
     
@@ -345,6 +375,8 @@ def check_patterns_full(ticker, df):
 
     return pattern_str if pattern_str else "None", c0['Vol_Ratio']
 
+
+
 # --- 4. MAIN ENGINE ---
 def main():
     print("--- NISON EXPERT SIGNALS (Updated with ML Features & Buy Logic) ---")
@@ -360,7 +392,8 @@ def main():
     print(f"Scanning {len(tickers)} stocks...")
     
     try:
-        data = yf.download(tickers, period="2y", group_by='ticker', auto_adjust=True, threads=True)
+        data = yf.download(tickers, period="2y", interval="1d", group_by='ticker', auto_adjust=True, threads=True)
+        #data = yf.download(tickers, period="5y", interval="1wk", group_by='ticker', auto_adjust=True, threads=True)
     except Exception as e:
         print(f"Download Error: {e}")
         return
@@ -403,7 +436,7 @@ def main():
             
             # NEW: Run Buy Signal Logic
             buy_signal = check_buy_signal(df_t, squeeze)
-            
+            calculated_stop, calculated_target = calculate_risk_parameters(df_t)
             # 3. Save Result
             c0 = df_t.iloc[-1]
             signal_date = c0.name.strftime('%Y-%m-%d')
@@ -412,6 +445,8 @@ def main():
                 "Date": signal_date,
                 "Ticker": ticker,
                 "Price": round(c0['Close'], 2),
+                "Vault Door (SL)": calculated_stop,     # <--- ADD THIS
+                "Target Price (TP)": calculated_target, # <--- ADD THIS
                 "Buy Signal": buy_signal,
                 "Patterns": patterns,
                 "Daily Trend": trend_status,
@@ -436,7 +471,7 @@ def main():
     if results:
         df_res = pd.DataFrame(results)
         # Reorder columns to put the most important stuff first
-        cols = ['Date', 'Ticker', 'Price', 'Buy Signal', 'Patterns', 'ROC(5)', 'RSI', 'Z-Score', 'Rel Vol', 'Daily Trend', 'Bullish Divergence', 'Volatility Squeeze', 'PTJ Status', 'Golden Cross']
+        cols = ['Date', 'Ticker', 'Price', 'Buy Signal', 'Vault Door (SL)', 'Target Price (TP)','Patterns', 'ROC(5)', 'RSI', 'Z-Score', 'Rel Vol', 'Daily Trend', 'Bullish Divergence', 'Volatility Squeeze', 'PTJ Status', 'Golden Cross']
         df_res = df_res[[c for c in cols if c in df_res.columns]]
         print(df_res)
         df_res.to_csv(OUTPUT_FILE, index=False)
