@@ -295,7 +295,7 @@ def check_patterns_full(ticker, df):
         patterns.append("Bullish Belt-Hold")
 
     # 5. BULLISH ENGULFING
-    if prev_black and is_white and (c0['Close'] > c1['Open']) and (c0['Open'] < c1['Close']) and c1['Close'] < df.iloc[-7]['Close']:
+    if prev_black and is_white and (c0['Close'] > c1['Open']) and (c0['Open'] < c1['Close']) and c1['Close'] < df.iloc[-7]['Close']and c1['Close'] < df.iloc[-3]['Close']:
         patterns.append("Bullish Engulfing")
 
     # 6. BULLISH HARAMI
