@@ -291,29 +291,29 @@ def check_patterns_full(ticker, df):
         patterns.append("Dragonfly Doji")
 
     # 4. BULLISH BELT-HOLD
-    if is_white and (c0['Open'] == c0['Low']) and (body0 > avg_body * 1.5):
-        patterns.append("Bullish Belt-Hold")
+    #if is_white and (c0['Open'] == c0['Low']) and (body0 > avg_body * 1.5):
+    #    patterns.append("Bullish Belt-Hold")
 
     # 5. BULLISH ENGULFING
-    if prev_black and is_white and (c0['Close'] > c1['Open']) and (c0['Open'] < c1['Close']) and c1['Close'] < df.iloc[-7]['Close']and c1['Close'] < df.iloc[-3]['Close']:
+    #if prev_black and is_white and (c0['Close'] > c1['Open']) and (c0['Open'] < c1['Close']) and c1['Close'] < df.iloc[-7]['Close']and c1['Close'] < df.iloc[-3]['Close']:
         patterns.append("Bullish Engulfing")
 
     # 6. BULLISH HARAMI
-    if prev_black and is_white and (c0['Close'] < c1['Open']) and (c0['Open'] > c1['Close']):
-        patterns.append("Bullish Harami")
+    #if prev_black and is_white and (c0['Close'] < c1['Open']) and (c0['Open'] > c1['Close']):
+    #    patterns.append("Bullish Harami")
 
     # 7. TWEEZERS BOTTOM
-    if abs(c0['Low'] - c1['Low']) < (c0['Close'] * 0.002):
-        patterns.append("Tweezers Bottom")
+    #if abs(c0['Low'] - c1['Low']) < (c0['Close'] * 0.002):
+     #   patterns.append("Tweezers Bottom")
 
     # 8. BULLISH COUNTER ATTACK
-    if prev_black and is_white and (c0['Open'] < c1['Low']):
-        if abs(c0['Close'] - c1['Close']) < (c0['Close'] * 0.002):
-            patterns.append("Counter Attack Bullish")
+    #if prev_black and is_white and (c0['Open'] < c1['Low']):
+      #  if abs(c0['Close'] - c1['Close']) < (c0['Close'] * 0.002):
+      #      patterns.append("Counter Attack Bullish")
             
     # 9. BULLISH SEPARATING LINES
-    if prev_black and is_white and abs(c0['Open'] - c1['Open']) < (c0['Close'] * 0.002):
-        patterns.append("Bullish Separating Lines")
+   # if prev_black and is_white and abs(c0['Open'] - c1['Open']) < (c0['Close'] * 0.002):
+      #  patterns.append("Bullish Separating Lines")
 
     # 10. RISING WINDOW
     if c0['Low'] > c1['High']:
@@ -346,20 +346,20 @@ def check_patterns_full(ticker, df):
                 patterns.append("Morning Star pattern")
 
     # 15. RISING THREE METHODS
-    if (c4['Close'] > c4['Open']) and (c4['Body'] > avg_body):
-        if is_white and (c0['Close'] > c4['Close']):
-            patterns.append("Rising Three Methods")
+    #if (c4['Close'] > c4['Open']) and (c4['Body'] > avg_body):
+        #if is_white and (c0['Close'] > c4['Close']):
+        #    patterns.append("Rising Three Methods")
 
     # 16. FRYPAN BOTTOM
-    small_bodies = all(df.iloc[-i]['Body'] < avg_body for i in range(2, 6))
-    if small_bodies and is_white and (c0['Low'] > c1['High']):
-        patterns.append("Frypan Bottom")
+   # small_bodies = all(df.iloc[-i]['Body'] < avg_body for i in range(2, 6))
+   # if small_bodies and is_white and (c0['Low'] > c1['High']):
+    #    patterns.append("Frypan Bottom")
 
     # 17. TOWER BOTTOM
-    if (c4['Close'] < c4['Open']) and (c4['Body'] > avg_body):
-        consolidation = all(df.iloc[-i]['Body'] < avg_body for i in range(2, 5))
-        if consolidation and is_white and (c0['Body'] > avg_body):
-            patterns.append("Tower Bottom")
+   # if (c4['Close'] < c4['Open']) and (c4['Body'] > avg_body):
+    #    consolidation = all(df.iloc[-i]['Body'] < avg_body for i in range(2, 5))
+     #   if consolidation and is_white and (c0['Body'] > avg_body):
+      #      patterns.append("Tower Bottom")
 
     # --- CONFIRMATIONS ---
     supports = []
